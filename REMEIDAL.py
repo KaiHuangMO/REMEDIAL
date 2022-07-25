@@ -53,31 +53,54 @@ def SCUMBLE(x, y, k):
     for sample_idx in range(y.shape[0]):
         this_label = y[sample_idx]
         IRLblil = 1.
+        ave = 0.
         count = 0.
         IRLbli = []
         for label in range(len(this_label)):
             if this_label[label] == 1:
                 count += 1.0
                 IRLblil *= label_IRLbl[label]
+                ave += label_IRLbl[label]
                 IRLbli.append(label_IRLbl[label])
         if count == 0.:
-            print (this_label)
-        IRLblil_pow = pow(IRLblil, 1/count)
-        scumble = 1 - (1 / np.average(IRLblil)) * IRLblil_pow
-        scumble_sample.append(scumble)
-        z = 1
+            scumble = .0
+            #print (this_label)
+        else:
+            ave /= count
+            IRLblil_pow = pow(IRLblil, 1./count)
+            scumble = 1 - (1 / ave) * IRLblil_pow
+            scumble_sample.append(scumble)
+            z = 1
         scumbleD.append(scumble)
 
 
     scumbleD = np.average(scumbleD)
     return scumble_sample, scumbleD
 
-def REMEDIAL(x,y):
+def REMEDIAL(x1,y1):
+
+    x = []
+    y = []
+    xBak = []
+    yBak = []
+    for i in range(0, len(y1)):
+
+        if np.max(y1[i]) > 0:
+            x.append(x1[i])
+            y.append(y1[i])
+        else:
+            xBak.append(x1[i])
+            yBak.append(y1[i])
+    #print (len(xBak))
+    x = np.array(x)
+    y = np.array(y)
     mean_ir = mld_metrics.mean_ir(y)
     label_IRLbl = []
     scumble_sample = []
+    # 删除 y 都是0 的
+
     for label in range(y.shape[1]):  # 所有可能的 样本类别
-        ir_label = mld_metrics.ir_per_label(label, y)  # 最多类别数量 / 每个类别数量
+        ir_label,_ = mld_metrics.ir_per_label(label, y)  # 最多类别数量 / 每个类别数量
         label_IRLbl.append(ir_label)
     IRMean = np.mean(label_IRLbl)
     scumbleD = []
@@ -115,14 +138,21 @@ def REMEDIAL(x,y):
                     y_min[label_idx] = 0
                 else:
                     y_max[label_idx] = 0
-            x_new.append(thix_x)
-            x_new.append(thix_x)
-            y_new.append(y_min)
-            y_new.append(y_max)
+            if np.max(y_min) > 0:
+                y_new.append(y_min)
+                x_new.append(thix_x)
+            if np.max(y_max) > 0:
+                x_new.append(thix_x)
+                y_new.append(y_max)
 
         else:
             x_new.append(thix_x)
             y_new.append(this_y)
+
+    if len(xBak) > 0:
+        x_new.extend(xBak)
+        y_new.extend(yBak)
+
     return np.array(x_new), np.array(y_new)
 
 
@@ -131,7 +161,7 @@ from sklearn.metrics.pairwise import pairwise_distances
 
 
 # Example of usage
-
+'''
 x, y = make_multilabel_classification(n_samples=1000, n_features=10, n_classes=8, allow_unlabeled =False)
 print('Original samples generated (count): ')
 print(y.shape[0])
@@ -146,3 +176,4 @@ print('Synthetic samples generated (count): ')
 print(y_new.shape[0])
 
 z = 1
+'''
